@@ -22,7 +22,7 @@ public class DeletionsSimilarityFunction  extends ProjectSimilarityFunction{
         super(project, param);
         
         if(param instanceof Double)
-            value = 0.0;
+            value = project.avalDeletions((Double)param);
         else
             try {
                 throw new Exception("DeletionsSimilarityFunction works only with Double param");

@@ -5,5 +5,5 @@ set grid
 set xrange [0:1]
 set yrange [0:1]
 set style line 1 lc rgb '#0060ad' pt 7 ps 0.5 lt 1 lw 2
-f(x) = (exp(x) + (sin(3.14159265359**x) - 1.0))
-plot f(x) title '(exp(x) + (sin(3.14159265359**x) - 1.0))', '/home/ronaldo/NetBeansProjects/GitSimilarity/provo_deletionsData.txt' w p ls 1 title 'points'
+f(x) = (exp(((0.0 - 0.0) + x))**1.0**cos(-1.0) / ((exp(3.14159265359) - (1.0 * x)) - 1.0))
+plot f(x) title '(exp(((0.0 - 0.0) + x))**1.0**cos(-1.0) / ((exp(3.14159265359) - (1.0 * x)) - 1.0))', '/home/ronaldo/Documentos/GitSimilarity/provo_deletionsData.txt' w p ls 1 title 'points'

@@ -189,7 +189,7 @@ public class Mining {
 
                 MergeConflicts.setConflictCommits(this.commits, mergeConflicts);
 
-                this.ndd = NormalizedDiffs.getNormalizedDiffs(commits, 0, commits.size() - 1, Double.valueOf(commits.size()) / fatorNormalizedDiffs, pathDir);
+                this.ndd = NormalizedDiffs.getNormalizedDiffs(commits, fatorNormalizedDiffs, pathDir);
 
             } 
 

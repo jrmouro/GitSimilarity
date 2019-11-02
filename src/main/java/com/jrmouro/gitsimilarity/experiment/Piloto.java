@@ -113,16 +113,16 @@ public class Piloto implements Experiment {
 
         List<ParamClassFunction> funcoes = new ArrayList();
 
-        for (double d = 0.2; d < 1.0; d = d + 0.2) {
+        for (double d = 0.1; d < 1.0; d = d + 0.1) {
             funcoes.add(new ParamClassFunction(Class.forName(deletions), d));
             funcoes.add(new ParamClassFunction(Class.forName(insertions), d));
             funcoes.add(new ParamClassFunction(Class.forName(changedFiles), d));
         }
 
         //Projetos de referência
-        URL url1 = new URL("https://api.github.com/repos/jrmouro/chatProject");
-        URL url2 = new URL("https://api.github.com/repos/jrmouro/provo");
-        URL url3 = new URL("https://api.github.com/repos/jrmouro/genetic");
+        URL url1 = new URL("https://api.github.com/repos/bcoin-org/bcoin");
+        URL url2 = new URL("https://api.github.com/repos/ptwobrussell/Mining-the-Social-Web");
+        URL url3 = new URL("https://api.github.com/repos/zone117x/node-open-mining-portal");
 
         CanonicalPath.deleteDir("temp");
         CanonicalPath.createDir("temp");
@@ -132,15 +132,15 @@ public class Piloto implements Experiment {
         CanonicalPath.createDir(proj);
 
         List<Project> projectList = new ArrayList();
-        projectList.add(new Project(url1, Paths.get(projRef.toString(), "ref1"), 10.0));
-        projectList.add(new Project(url2, Paths.get(projRef.toString(), "ref2"), 10.0));
-        projectList.add(new Project(url3, Paths.get(projRef.toString(), "ref3"), 10.0));
+        projectList.add(new Project(url1, Paths.get(projRef.toString(), "ref1"), 1.0, 0.1));
+        projectList.add(new Project(url2, Paths.get(projRef.toString(), "ref2"), 1.0, 0.1));
+        projectList.add(new Project(url3, Paths.get(projRef.toString(), "ref3"), 1.0, 0.1));
 
         //Projeto a ser analisado
         URL gitMining = new URL("https://api.github.com/repos/jrmouro/GitMining");
 
         //Experimento "Piloto"
-        Piloto piloto = new Piloto(funcoes, projectList, new Project(gitMining, Paths.get(proj.toString(), "proj"), 10.0));
+        Piloto piloto = new Piloto(funcoes, projectList, new Project(gitMining, Paths.get(proj.toString(), "proj"), 1.0, 0.1));
 
         piloto.run();
 

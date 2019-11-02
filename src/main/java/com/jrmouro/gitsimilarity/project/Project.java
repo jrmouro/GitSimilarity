@@ -57,10 +57,10 @@ public final class Project {
         private Op op;
 
         public GA(Fitness fitnessFunction) throws OutOfRangeException {
-            super(50, //population size
-                    60, //population limit
+            super( 100, //population size
+                    100, //population limit
                     fitnessFunction, // fitness function
-                    10, //chromosome size
+                    20, //chromosome size
                     0, // left bound chromosome
                     130000, // right bound chormosome
                     new IntegerStoppingCondition(1200),
@@ -246,13 +246,13 @@ public final class Project {
         p.plot();
     }
 
-    public Project(URL url, Path clonePath, double fatorNormalizedDiffs) throws IOException, InterruptedException, ParseException {
+    public Project(URL url, Path clonePath, double result, double fatorNormalizedDiffs) throws IOException, InterruptedException, ParseException {
 
         this.var = new Var("x");
         
         Mining mining = new Mining(clonePath, url, fatorNormalizedDiffs);
         this.nameProject = mining.name();
-        this.result = mining.getMergeConflictsRate();
+        this.result = result;
 
         Op[] ops = {
             new VarOp(var),

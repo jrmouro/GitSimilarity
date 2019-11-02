@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import org.json.simple.JSONObject;
@@ -23,7 +24,7 @@ import org.json.simple.parser.ParseException;
  *
  * @author ronaldo
  */
-public class Commits{
+public class Commits implements Iterable<Commit>{
     
     public final Path pathDir;
     private final List<Commit> commits = new ArrayList();
@@ -129,6 +130,11 @@ public class Commits{
 
         return ret;
         
+    }
+
+    @Override
+    public Iterator<Commit> iterator() {
+        return this.commits.iterator();
     }
     
     

@@ -22,7 +22,7 @@ public class ChangedFilesSimilarityFunction extends ProjectSimilarityFunction{
         super(project, param);
         
         if(param instanceof Double)
-            value = 0.0;
+            value  = project.avalChangedFiles((Double)param);
         else
             try {
                 throw new Exception("DeletionsSimilarityFunction works only with Double param");

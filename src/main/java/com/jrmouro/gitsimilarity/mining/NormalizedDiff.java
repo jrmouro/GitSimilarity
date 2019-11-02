@@ -34,7 +34,7 @@ public class NormalizedDiff extends Diff{
             this.normalize(difRef);        
     }
     
-    @Override
+    /*@Override
     final public NormalizedDiff normalize(Diff difRef){
         this.difRef = difRef;        
         //double t = this.getNormalizedTime(difRef);
@@ -73,7 +73,7 @@ public class NormalizedDiff extends Diff{
         Integer i = other.commit1.date, f = this.commit2.date;
         Integer ff = other.commit2.date;        
         return Double.valueOf(f - i)/Double.valueOf(ff - i);
-    }
+    }*/
 
     public Diff getDifRef() {
         return difRef;
