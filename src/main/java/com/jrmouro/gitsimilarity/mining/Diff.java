@@ -18,22 +18,31 @@ import java.nio.file.Path;
 public class Diff {
     
     final public Commit commit1, commit2;
+    public int time;
     public int changedfiles = 0, insertions = 0, deletions = 0;
 
     public Diff(Commit c1, Commit c2) {
         this.commit1 = c1;
         this.commit2 = c2;
+        this.time = Math.abs(c2.date - c1.date);
     }
+
+    public void setTime(int time) {
+        this.time = time;
+    }
+    
+    
     
 
     @Override
     public String toString() {
         
-        return  "Commit1: " + this.commit1.hash + "\n" +
-                "Commit2: " + this.commit2.hash + "\n" +
+        return  //"Commit1: " + this.commit1.hash + "\n" +
+                //"Commit2: " + this.commit2.hash + "\n" +
                 "ChangedFiles: " + String.valueOf(this.changedfiles)
                 + " - Insertions: " + String.valueOf(this.insertions)
-                + " - Deletions: " + String.valueOf(this.deletions);
+                + " - Deletions: " + String.valueOf(this.deletions)
+                 + " - Time: " + String.valueOf(this.time);
         
     }
 
@@ -43,6 +52,7 @@ public class Diff {
         this.deletions = deletions;
         this.commit1 = c1;
         this.commit2 = c2;
+        this.time = Math.abs(c2.date - c1.date);
     }
     
     public static Diff parse(Diff diff, String diffStr) {
@@ -71,9 +81,10 @@ public class Diff {
         return diff;
     }   
     
-    static public Diff gitDiff(Commit c1, Commit c2, Path pathRep) throws IOException, InterruptedException {
+    static public Diff gitDiff(Commit c1, Commit c2, Integer time, Path pathRep) throws IOException, InterruptedException {
         
         Diff ret = new Diff(c1, c2);
+        ret.setTime(time);
         
         Process process = Runtime.getRuntime().exec("git diff " + c1.hash + " " + c2.hash + " --shortstat", null, new File(pathRep.toString()));
         
@@ -105,6 +116,22 @@ public class Diff {
         return ret;
     }
     
-    
+    public static class NormalizedDiff{
+        
+        public final double time, changedfiles, insertions, deletions;
+
+        public NormalizedDiff(double time, double changedfiles, double insertions, double deletions) {
+            this.time = time;
+            this.changedfiles = changedfiles;
+            this.insertions = insertions;
+            this.deletions = deletions;
+        }
+
+        @Override
+        public String toString() {
+            return "time=" + time + ", changedfiles=" + changedfiles + ", insertions=" + insertions + ", deletions=" + deletions;
+        }
+        
+    }
 
 }

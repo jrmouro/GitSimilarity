@@ -8,11 +8,9 @@
 import com.jrmouro.gitsimilarity.mining.CanonicalPath;
 import com.jrmouro.gitsimilarity.mining.Commits;
 import com.jrmouro.gitsimilarity.mining.Diff;
-import com.jrmouro.gitsimilarity.mining.NormalizedDiff;
-import com.jrmouro.gitsimilarity.mining.NormalizedDiffs;
+import com.jrmouro.gitsimilarity.mining.Diffs;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Iterator;
 import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -50,14 +48,25 @@ public class DiffsJUnitTest {
         
         Path pathRep = CanonicalPath.getPath("temp/projRef/ref1");
         
-        Commits commits = Commits.gitCommits(pathRep, false);        
+        Commits commits = Commits.gitCommits(pathRep, false);      
         
-        NormalizedDiffs diffs = NormalizedDiffs.getNormalizedDiffs(commits, 0.1, pathRep);
+        Diffs diffs = Diffs.gitDiffs(commits, pathRep);
         
-        for (Iterator<NormalizedDiff> iterator = diffs.iterator(); iterator.hasNext();) {
-            Diff next = iterator.next();
-            System.out.println(next);
+        System.out.println(diffs.getTime());
+        
+        
+        for (Diff diff : diffs) {
+             System.out.println(diff);
         }
+        
+        Diffs.NormalizedDiffs diffsN = Diffs.getNormalizedDiffs(diffs, 10);
+        
+        
+        for (Diff.NormalizedDiff normalizedDiff : diffsN) {
+            System.out.println(normalizedDiff);
+        }
+        
+        
         
     
     }

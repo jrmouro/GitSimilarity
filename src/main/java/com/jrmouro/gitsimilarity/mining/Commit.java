@@ -36,15 +36,6 @@ public class Commit {
         this.pathDir = pathDir;
     }
     
-    public Double getDiffCommitDeletionsRate(Commit commit) throws IOException, InterruptedException{
-        Diff diff = NormalizedDiff.gitDiff(this, commit, pathDir, null);
-        return diff.getNrChangedFilesNrDeletionsRate();
-    }
-    
-    public Double getDiffCommitInsertionsRate(Commit commit) throws IOException, InterruptedException{
-        Diff diff = NormalizedDiff.gitDiff(this, commit, pathDir, null);
-        return diff.getNrChangedFilesNrInsertionsRate();
-    }
     
     public void setConflict(MergeConflicts conflicts){
         for (String conflict : conflicts) {

@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -37,7 +38,7 @@ public class Commits implements Iterable<Commit>{
             
     public void add(Commit commit){
         
-        this.commits.add(commit);
+        this.commits.add(0, commit);
         
         this.authors.add(commit.author);
         
@@ -127,6 +128,8 @@ public class Commits implements Iterable<Commit>{
 
         if (exitVal == 0 && error.toString().length() > 0)
             System.out.println("Error: " + error.toString());
+        
+        
 
         return ret;
         

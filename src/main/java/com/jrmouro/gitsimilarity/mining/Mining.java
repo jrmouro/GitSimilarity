@@ -40,9 +40,9 @@ public class Mining {
 
     private  Diff total = null;
 
-    private  Diffs diffs = null;
-
-    private  NormalizedDiffs ndd = null;    
+    private  Diffs diffs = null;   
+    
+    private Diffs.NormalizedDiffs nDiffs = null;
 
     private  MergeConflicts mergeConflicts = null;
    
@@ -54,12 +54,7 @@ public class Mining {
     public URL getUrl() {
         return url;
     }
-
-    public NormalizedDiffs getrNdd() {
-        return ndd;
-    }
-
-    
+   
 
     public void gitCloneRepository() throws IOException, InterruptedException, Exception {
         if (url != null && pathDir != null) {
@@ -75,6 +70,10 @@ public class Mining {
 
     public final Commits getMergeCommits() {
         return mergeCommits;
+    }
+
+    public Diffs.NormalizedDiffs getnDiffs() {
+        return nDiffs;
     }
     
     public final double getMergeConflictsRate() {
@@ -147,7 +146,7 @@ public class Mining {
         return 0L;
     }
 
-    public Mining(Path pathDir, URL url, double fatorNormalizedDiffs) throws IOException, InterruptedException, ParseException {
+    public Mining(Path pathDir, URL url, Integer arityNormalizedDiffs, boolean clone) throws IOException, InterruptedException, ParseException {
 
         this.pathDir = pathDir;
 
@@ -157,11 +156,11 @@ public class Mining {
 
             this.githubRepositoryJSONObject = Mining.githubRepositoryJSONObject(url);
 
-            if (pathDir != null) {
+            if (pathDir != null && clone) {
 
                 String htmlUrl = (String) this.githubRepositoryJSONObject.get("html_url");
 
-                CanonicalPath.deleteDir(pathDir);
+                CanonicalPath.deleteDir(pathDir);                
 
                 gitCloneRepository(new URL(htmlUrl), pathDir);
 
@@ -181,15 +180,13 @@ public class Mining {
 
             if (this.commits.size() > 1) {
 
-                this.total = new NormalizedDiff(this.commits.get(0), this.commits.get(this.commits.size() - 1), pathDir);
-
-                this.diffs = Diffs.gitDiffs(commits, pathDir, total);
+                this.diffs = Diffs.gitDiffs(commits, pathDir);
+                
+                this.nDiffs = Diffs.getNormalizedDiffs(diffs, arityNormalizedDiffs);
 
                 this.mergeConflicts = MergeConflicts.gitMergeConflicts(pathDir);
 
-                MergeConflicts.setConflictCommits(this.commits, mergeConflicts);
-
-                this.ndd = NormalizedDiffs.getNormalizedDiffs(commits, fatorNormalizedDiffs, pathDir);
+                MergeConflicts.setConflictCommits(this.commits, mergeConflicts);                
 
             } 
 

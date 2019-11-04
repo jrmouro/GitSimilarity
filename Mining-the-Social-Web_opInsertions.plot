@@ -5,5 +5,5 @@ set grid
 set xrange [0:1]
 set yrange [0:1]
 set style line 1 lc rgb '#0060ad' pt 7 ps 0.5 lt 1 lw 2
-f(x) = (((sin(x) / exp(exp(0.0))) * exp(x)) / (3.14159265359 / cos(x)))
-plot f(x) title '(((sin(x) / exp(exp(0.0))) * exp(x)) / (3.14159265359 / cos(x)))', '/home/ronaldo/Documentos/GitSimilarity/Mining-the-Social-Web_insertionsData.txt' w p ls 1 title 'points'
+f(x) = (x - sin((x / 1.0)))
+plot f(x) title '(x - sin((x / 1.0)))', '/home/ronaldo/Documentos/GitSimilarity/Mining-the-Social-Web_insertionsData.txt' w p ls 1 title 'points'

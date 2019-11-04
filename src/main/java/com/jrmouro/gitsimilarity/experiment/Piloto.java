@@ -74,32 +74,31 @@ public class Piloto implements Experiment {
             //
             // Gera o Sistema de Equações de Similaridade
             lsse = Piloto.getLSSE(projectRef, paramclassFunctions);
-            
+
             System.out.println(lsse);
-            
+
             // FitnessFunction
             Fitness fitness = new Fitness(lsse);
-            
+
             // um cromossomo inicial
             ChromosomeDouble c = new ChromosomeOne(lsse.getWeights(), fitness, 0.1);
-            
+
             c = (ChromosomeDouble) new EvolutionScoutSniffer(100, 0.001).evolve(c, 100, false);
-            
+
             SimilarityEquation res = getSE(project, paramclassFunctions);
-            
+
             res.setWeights(c.getRepresentation());
-            
+
             System.out.println("weights: " + c);
-            
+
             System.out.println("similarity: " + res.getValue());
-            
-            
-        } catch (ClassNotFoundException | 
-                NoSuchMethodException | 
-                InstantiationException | 
-                IllegalAccessException | 
-                IllegalArgumentException | 
-                InvocationTargetException ex) {
+
+        } catch (ClassNotFoundException
+                | NoSuchMethodException
+                | InstantiationException
+                | IllegalAccessException
+                | IllegalArgumentException
+                | InvocationTargetException ex) {
             Logger.getLogger(Piloto.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -120,27 +119,33 @@ public class Piloto implements Experiment {
         }
 
         //Projetos de referência
-        URL url1 = new URL("https://api.github.com/repos/bcoin-org/bcoin");
-        URL url2 = new URL("https://api.github.com/repos/ptwobrussell/Mining-the-Social-Web");
-        URL url3 = new URL("https://api.github.com/repos/zone117x/node-open-mining-portal");
+        URL url1 = new URL("https://api.github.com/repos/google/deepvariant");
+        URL url2 = new URL("https://api.github.com/repos/EpistasisLab/tpot");
+        URL url3 = new URL("https://api.github.com/repos/giacomelli/GeneticSharp");
 
-        CanonicalPath.deleteDir("temp");
-        CanonicalPath.createDir("temp");
         Path projRef = Paths.get(CanonicalPath.getPath("temp").toString() + "/projRef");
         Path proj = Paths.get(CanonicalPath.getPath("temp").toString() + "/proj");
-        CanonicalPath.createDir(projRef);
-        CanonicalPath.createDir(proj);
+
+        boolean clone = false;
+
+        if (clone) {
+            CanonicalPath.deleteDir("temp");
+            CanonicalPath.createDir("temp");
+            CanonicalPath.createDir(projRef);
+            CanonicalPath.createDir(proj);
+        } 
+
 
         List<Project> projectList = new ArrayList();
-        projectList.add(new Project(url1, Paths.get(projRef.toString(), "ref1"), 1.0, 0.1));
-        projectList.add(new Project(url2, Paths.get(projRef.toString(), "ref2"), 1.0, 0.1));
-        projectList.add(new Project(url3, Paths.get(projRef.toString(), "ref3"), 1.0, 0.1));
+        projectList.add(new Project(url1, Paths.get(projRef.toString(), "ref1"), 1.0, 10, clone));
+        projectList.add(new Project(url2, Paths.get(projRef.toString(), "ref2"), 1.0, 10, clone));
+        projectList.add(new Project(url3, Paths.get(projRef.toString(), "ref3"), 1.0, 10, clone));
 
         //Projeto a ser analisado
         URL gitMining = new URL("https://api.github.com/repos/jrmouro/GitMining");
 
         //Experimento "Piloto"
-        Piloto piloto = new Piloto(funcoes, projectList, new Project(gitMining, Paths.get(proj.toString(), "proj"), 1.0, 0.1));
+        Piloto piloto = new Piloto(funcoes, projectList, new Project(gitMining, Paths.get(proj.toString(), "proj"), 1.0, 10, clone));
 
         piloto.run();
 

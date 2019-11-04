@@ -7,15 +7,13 @@ package com.jrmouro.gitsimilarity.project;
 
 import com.jrmouro.genetic.chromosome.ChromosomeAbstract;
 import com.jrmouro.genetic.fitnessfunction.FitnessFunction;
+import com.jrmouro.genetic.integer.CompositeStoppingCondition;
 import com.jrmouro.genetic.integer.IntegerChromosome;
 import com.jrmouro.genetic.integer.IntegerGeneticAlgorithm;
-import com.jrmouro.genetic.integer.IntegerStoppingCondition;
 import com.jrmouro.gitsimilarity.mining.CanonicalPath;
 import com.jrmouro.gitsimilarity.mining.Mining;
 import com.jrmouro.grammaticalevolution.operators.Cos;
 import com.jrmouro.grammaticalevolution.operators.Div;
-import com.jrmouro.grammaticalevolution.operators.Exp;
-import com.jrmouro.grammaticalevolution.operators.ExpE;
 import com.jrmouro.grammaticalevolution.operators.GeneratorOp;
 import com.jrmouro.grammaticalevolution.operators.Less;
 import com.jrmouro.grammaticalevolution.operators.Ln;
@@ -23,6 +21,7 @@ import com.jrmouro.grammaticalevolution.operators.Mult;
 import com.jrmouro.grammaticalevolution.operators.One;
 import com.jrmouro.grammaticalevolution.operators.Op;
 import com.jrmouro.grammaticalevolution.operators.Pi;
+import com.jrmouro.grammaticalevolution.operators.Rnd;
 import com.jrmouro.grammaticalevolution.operators.Sin;
 import com.jrmouro.grammaticalevolution.operators.Sub;
 import com.jrmouro.grammaticalevolution.operators.Sum;
@@ -34,8 +33,10 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.math3.exception.OutOfRangeException;
+import org.apache.commons.math3.genetics.StoppingCondition;
 import org.json.simple.parser.ParseException;
 
 /**
@@ -49,42 +50,63 @@ public final class Project {
     public final Var var;
     public final Op opChangedFiles, opDeletions, opInsertions;
     public final double [][] changedFilesData, deletionsData, insertionsData;
+    public final Integer changedFilesGeneration, deletionsGeneration, insertionsGeneration;
 
     class GA extends IntegerGeneticAlgorithm {
-
+        
+        private IntegerChromosome best = null;
         private Integer[] representation = null;
         private final Fitness fitnessFunction;
         private Op op;
 
-        public GA(Fitness fitnessFunction) throws OutOfRangeException {
-            super( 100, //population size
-                    100, //population limit
+        @Override
+        public String toString() {
+            return "GA{\n" + "\tbest=" + best + ", \n\trepresentation=" + Arrays.toString(representation) + ", \n\top=" + op + "\n}";
+        }
+        
+        
+
+        public GA(Fitness fitnessFunction, StoppingCondition stoppingCondition) throws OutOfRangeException {
+            super(  20, //population size
+                    5,
+                    20, //population limit
                     fitnessFunction, // fitness function
-                    20, //chromosome size
+                    16, //chromosome size
                     0, // left bound chromosome
                     130000, // right bound chormosome
-                    new IntegerStoppingCondition(1200),
-                    5, // crossover points
-                    .3, // crossover rate
-                    .3, // mutation rate
-                    .2, // mutation rate2
-                    10);
+                    stoppingCondition,
+                    //new CompositeStoppingCondition(1200, 0.01),
+                    9, // crossover points
+                    .7, // crossover rate
+                    .5, // mutation rate
+                    .5, // mutation rate2
+                    3);
             this.fitnessFunction = fitnessFunction;
         }
+
+        public IntegerChromosome getBest() {
+            return best;
+        }
+
+        public Op getOp() {
+            return op;
+        }
+        
+        
 
         @Override
         public IntegerChromosome run() {
 
-            IntegerChromosome c = super.run();
+            this.best = super.run();
 
-            representation = new Integer[c.getRepresentation().size()];
+            representation = new Integer[this.best.getRepresentation().size()];
 
             int i = 0;
-            for (Integer integer : c.getRepresentation()) {
+            for (Integer integer : this.best.getRepresentation()) {
                 representation[i++] = integer;
             }
 
-            return c;
+            return this.best;
         }
 
         public Integer[] getRepresentation(boolean run) {
@@ -147,7 +169,7 @@ public final class Project {
                 var.value = dado[0];
                 double a = op.aval();
 
-                ret -= ((a - dado[1]) * (a - dado[1]));
+                ret -= Math.abs(a - dado[1]);
 
                 if (Double.isNaN(ret)) {
                     return -Double.MAX_VALUE;
@@ -246,11 +268,11 @@ public final class Project {
         p.plot();
     }
 
-    public Project(URL url, Path clonePath, double result, double fatorNormalizedDiffs) throws IOException, InterruptedException, ParseException {
+    public Project(URL url, Path clonePath, double result, Integer fatorNormalizedDiffs, boolean clone) throws IOException, InterruptedException, ParseException {
 
         this.var = new Var("x");
         
-        Mining mining = new Mining(clonePath, url, fatorNormalizedDiffs);
+        Mining mining = new Mining(clonePath, url, fatorNormalizedDiffs, clone);
         this.nameProject = mining.name();
         this.result = result;
 
@@ -260,20 +282,26 @@ public final class Project {
             new Sub(),
             new One(),
             new Pi(),
-            new Exp(),
+            new Rnd(),
+            //new Exp(),
             new Less(),
             new Sin(),
             new Cos(),
             new Mult(),
             new Div(),
-            new ExpE(),
+            //new ExpE(),
             new Ln()};
 
-        GeneratorOp generator = new GeneratorOp(ops, 4);
+        GeneratorOp generator = new GeneratorOp(ops,var, 8);
+        
+        CompositeStoppingCondition scC = new CompositeStoppingCondition(1200, 0.01);
+        CompositeStoppingCondition scD = new CompositeStoppingCondition(1200, 0.01);
+        CompositeStoppingCondition scI = new CompositeStoppingCondition(1200, 0.01);
+        
 
-        GA gaC = new GA(new Fitness(mining.getrNdd().changedFilesData(), generator));
-        GA gaD = new GA(new Fitness(mining.getrNdd().deletionsData(), generator));
-        GA gaI = new GA(new Fitness(mining.getrNdd().insertionsData(), generator));
+        GA gaC = new GA(new Fitness(mining.getnDiffs().getChangedFilesData(), generator), scC);
+        GA gaD = new GA(new Fitness(mining.getnDiffs().getDeletionsData(), generator), scD);
+        GA gaI = new GA(new Fitness(mining.getnDiffs().getInsertionsData(), generator), scI);
         
         this.opChangedFiles = gaC.getOp(true);
         this.opDeletions = gaD.getOp(true);
@@ -283,9 +311,17 @@ public final class Project {
         this.deletionsData = gaD.getFitnessFunction().dados;
         this.insertionsData = gaI.getFitnessFunction().dados;
         
+        this.changedFilesGeneration = scC.numGenerations;
+        this.insertionsGeneration = scI.numGenerations;
+        this.deletionsGeneration = scD.numGenerations;
+        
         this.plotChangedFiles();
         this.plotDeletions();
         this.plotInsertions();
+        
+        System.out.println("gaC:\n"+gaC);
+        System.out.println("gaI:\n"+gaI);
+        System.out.println("gaD:\n"+gaD);
 
     }
 
