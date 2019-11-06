@@ -10,11 +10,12 @@ import com.jrmouro.genetic.fitnessfunction.FitnessFunction;
 import com.jrmouro.genetic.integer.CompositeStoppingCondition;
 import com.jrmouro.genetic.integer.IntegerChromosome;
 import com.jrmouro.genetic.integer.IntegerGeneticAlgorithm;
+import com.jrmouro.genetic.integer.VectorPointsIntegerCrossover;
 import com.jrmouro.gitsimilarity.mining.CanonicalPath;
 import com.jrmouro.gitsimilarity.mining.Mining;
 import com.jrmouro.grammaticalevolution.operators.Cos;
 import com.jrmouro.grammaticalevolution.operators.Div;
-import com.jrmouro.grammaticalevolution.operators.GeneratorOp;
+import com.jrmouro.grammaticalevolution.operators.OpGenerator;
 import com.jrmouro.grammaticalevolution.operators.Less;
 import com.jrmouro.grammaticalevolution.operators.Ln;
 import com.jrmouro.grammaticalevolution.operators.Mult;
@@ -45,6 +46,8 @@ import org.json.simple.parser.ParseException;
  */
 public final class Project {
 
+    
+    
     public final String nameProject;
     public final double result;
     public final Var var;
@@ -53,6 +56,8 @@ public final class Project {
     public final Integer changedFilesGeneration, deletionsGeneration, insertionsGeneration;
 
     class GA extends IntegerGeneticAlgorithm {
+        
+    
         
         private IntegerChromosome best = null;
         private Integer[] representation = null;
@@ -67,20 +72,19 @@ public final class Project {
         
 
         public GA(Fitness fitnessFunction, StoppingCondition stoppingCondition) throws OutOfRangeException {
-            super(  20, //population size
-                    5,
-                    20, //population limit
+            super(  50, //population size
+                    15,
+                    50, //population limit
                     fitnessFunction, // fitness function
-                    16, //chromosome size
+                    64, //chromosome size
                     0, // left bound chromosome
-                    130000, // right bound chormosome
+                    Integer.MAX_VALUE - 1, // right bound chormosome
                     stoppingCondition,
-                    //new CompositeStoppingCondition(1200, 0.01),
-                    9, // crossover points
-                    .7, // crossover rate
+                    new VectorPointsIntegerCrossover(100, 1),                   
+                    .5, // crossover rate
                     .5, // mutation rate
-                    .5, // mutation rate2
-                    3);
+                    .3, // mutation rate2
+                    2);
             this.fitnessFunction = fitnessFunction;
         }
 
@@ -127,7 +131,7 @@ public final class Project {
         public Op getOp(boolean run) {
 
             if (op == null || run) {
-                GeneratorOp generator = this.fitnessFunction.generator;
+                OpGenerator generator = this.fitnessFunction.generator;
                 this.op = generator.generate(this.getRepresentation(run));
             }
 
@@ -140,14 +144,14 @@ public final class Project {
     class Fitness implements FitnessFunction<Integer> {
 
         public final double[][] dados;
-        final GeneratorOp generator;
+        final OpGenerator generator;
 
-        public Fitness(double[][] dados, GeneratorOp generator) {
+        public Fitness(double[][] dados, OpGenerator generator) {
             this.dados = dados;
             this.generator = generator;
         }
 
-        public GeneratorOp getGenerator() {
+        public OpGenerator getGenerator() {
             return generator;
         }
 
@@ -292,16 +296,20 @@ public final class Project {
             //new ExpE(),
             new Ln()};
 
-        GeneratorOp generator = new GeneratorOp(ops,var, 8);
+        OpGenerator generator = new OpGenerator(ops,var, 8);
         
         CompositeStoppingCondition scC = new CompositeStoppingCondition(1200, 0.01);
         CompositeStoppingCondition scD = new CompositeStoppingCondition(1200, 0.01);
         CompositeStoppingCondition scI = new CompositeStoppingCondition(1200, 0.01);
         
+         
+        
 
         GA gaC = new GA(new Fitness(mining.getnDiffs().getChangedFilesData(), generator), scC);
         GA gaD = new GA(new Fitness(mining.getnDiffs().getDeletionsData(), generator), scD);
         GA gaI = new GA(new Fitness(mining.getnDiffs().getInsertionsData(), generator), scI);
+        
+        
         
         this.opChangedFiles = gaC.getOp(true);
         this.opDeletions = gaD.getOp(true);
