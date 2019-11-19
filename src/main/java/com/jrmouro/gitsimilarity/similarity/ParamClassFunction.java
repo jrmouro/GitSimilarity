@@ -12,7 +12,6 @@ package com.jrmouro.gitsimilarity.similarity;
 public class ParamClassFunction {
 
     final Object param;
-
     final Class classFunction;
 
     public ParamClassFunction(Class classFunction, Object param) {

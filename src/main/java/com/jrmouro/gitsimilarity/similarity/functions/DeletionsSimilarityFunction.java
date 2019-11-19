@@ -35,5 +35,12 @@ public class DeletionsSimilarityFunction  extends ProjectSimilarityFunction{
     public Double getValue() {
         return this.value;
     }
+
+    @Override
+    public String toString() {
+        return "DeletionsSimilarityFunction{" + "value=" + value + '}';
+    }
+    
+    
     
 }

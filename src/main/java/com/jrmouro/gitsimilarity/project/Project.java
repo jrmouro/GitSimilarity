@@ -5,39 +5,29 @@
  */
 package com.jrmouro.gitsimilarity.project;
 
-import com.jrmouro.genetic.chromosome.ChromosomeAbstract;
-import com.jrmouro.genetic.fitnessfunction.FitnessFunction;
 import com.jrmouro.genetic.integer.CompositeStoppingCondition;
-import com.jrmouro.genetic.integer.IntegerChromosome;
-import com.jrmouro.genetic.integer.IntegerGeneticAlgorithm;
 import com.jrmouro.genetic.integer.VectorPointsIntegerCrossover;
-import com.jrmouro.gitsimilarity.mining.CanonicalPath;
 import com.jrmouro.gitsimilarity.mining.Mining;
-import com.jrmouro.grammaticalevolution.operators.Cos;
-import com.jrmouro.grammaticalevolution.operators.Div;
-import com.jrmouro.grammaticalevolution.operators.OpGenerator;
-import com.jrmouro.grammaticalevolution.operators.Less;
-import com.jrmouro.grammaticalevolution.operators.Ln;
-import com.jrmouro.grammaticalevolution.operators.Mult;
-import com.jrmouro.grammaticalevolution.operators.One;
-import com.jrmouro.grammaticalevolution.operators.Op;
-import com.jrmouro.grammaticalevolution.operators.Pi;
-import com.jrmouro.grammaticalevolution.operators.Rnd;
-import com.jrmouro.grammaticalevolution.operators.Sin;
-import com.jrmouro.grammaticalevolution.operators.Sub;
-import com.jrmouro.grammaticalevolution.operators.Sum;
-import com.jrmouro.grammaticalevolution.operators.Var;
-import com.jrmouro.grammaticalevolution.operators.VarOp;
-import com.jrmouro.plot.Plottable;
-import com.jrmouro.plot.PointsFunctionPlottable;
+import com.jrmouro.operator.simple.ConstOp;
+import com.jrmouro.operator.simple.Cos;
+import com.jrmouro.operator.simple.Div;
+import com.jrmouro.operator.simple.Exp;
+import com.jrmouro.operator.genetic.GenOpCoeffOp;
+import com.jrmouro.operator.simple.Ln;
+import com.jrmouro.operator.simple.Mul;
+import com.jrmouro.operator.simple.Operator;
+import com.jrmouro.operator.plot.PlotOp;
+import com.jrmouro.operator.genetic.RangeValidity;
+import com.jrmouro.operator.simple.Sin;
+import com.jrmouro.operator.simple.Sub;
+import com.jrmouro.operator.simple.Sum;
+import com.jrmouro.operator.simple.Var;
+import com.jrmouro.operator.simple.VarOp;
+import com.jrmouro.operator.generator.Generator;
+import com.jrmouro.operator.generator.TreeGenerator;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import org.apache.commons.math3.exception.OutOfRangeException;
-import org.apache.commons.math3.genetics.StoppingCondition;
 import org.json.simple.parser.ParseException;
 
 /**
@@ -46,144 +36,12 @@ import org.json.simple.parser.ParseException;
  */
 public final class Project {
 
-    
-    
     public final String nameProject;
     public final double result;
     public final Var var;
-    public final Op opChangedFiles, opDeletions, opInsertions;
-    public final double [][] changedFilesData, deletionsData, insertionsData;
-    public final Integer changedFilesGeneration, deletionsGeneration, insertionsGeneration;
-
-    class GA extends IntegerGeneticAlgorithm {
-        
-    
-        
-        private IntegerChromosome best = null;
-        private Integer[] representation = null;
-        private final Fitness fitnessFunction;
-        private Op op;
-
-        @Override
-        public String toString() {
-            return "GA{\n" + "\tbest=" + best + ", \n\trepresentation=" + Arrays.toString(representation) + ", \n\top=" + op + "\n}";
-        }
-        
-        
-
-        public GA(Fitness fitnessFunction, StoppingCondition stoppingCondition) throws OutOfRangeException {
-            super(  50, //population size
-                    15,
-                    50, //population limit
-                    fitnessFunction, // fitness function
-                    64, //chromosome size
-                    0, // left bound chromosome
-                    Integer.MAX_VALUE - 1, // right bound chormosome
-                    stoppingCondition,
-                    new VectorPointsIntegerCrossover(100, 1),                   
-                    .5, // crossover rate
-                    .5, // mutation rate
-                    .3, // mutation rate2
-                    2);
-            this.fitnessFunction = fitnessFunction;
-        }
-
-        public IntegerChromosome getBest() {
-            return best;
-        }
-
-        public Op getOp() {
-            return op;
-        }
-        
-        
-
-        @Override
-        public IntegerChromosome run() {
-
-            this.best = super.run();
-
-            representation = new Integer[this.best.getRepresentation().size()];
-
-            int i = 0;
-            for (Integer integer : this.best.getRepresentation()) {
-                representation[i++] = integer;
-            }
-
-            return this.best;
-        }
-
-        public Integer[] getRepresentation(boolean run) {
-
-            if (this.representation == null || run) {
-                this.run();
-            }
-
-            return representation;
-        }
-
-        public Fitness getFitnessFunction() {
-            return fitnessFunction;
-        }
-        
-        
-
-        public Op getOp(boolean run) {
-
-            if (op == null || run) {
-                OpGenerator generator = this.fitnessFunction.generator;
-                this.op = generator.generate(this.getRepresentation(run));
-            }
-
-            return this.op;
-
-        }
-        
-    }
-
-    class Fitness implements FitnessFunction<Integer> {
-
-        public final double[][] dados;
-        final OpGenerator generator;
-
-        public Fitness(double[][] dados, OpGenerator generator) {
-            this.dados = dados;
-            this.generator = generator;
-        }
-
-        public OpGenerator getGenerator() {
-            return generator;
-        }
-
-        @Override
-        public double fitness(ChromosomeAbstract<Integer> ca) {
-
-            Integer[] v = new Integer[ca.getRepresentation().size()];
-
-            int i = 0;
-            for (Integer integer : ca.getRepresentation()) {
-                v[i++] = integer;
-            }
-
-            Op op = generator.generate(v);
-
-            Double ret = 0.0;
-
-            for (double[] dado : dados) {
-                var.value = dado[0];
-                double a = op.aval();
-
-                ret -= Math.abs(a - dado[1]);
-
-                if (Double.isNaN(ret)) {
-                    return -Double.MAX_VALUE;
-                }
-            }
-
-            return ret;
-        }
-
-    }
+    public Operator opChangedFiles, opDeletions, opInsertions;
+    public final double[][] changedFilesData, deletionsData, insertionsData;
+    //public final Integer changedFilesGeneration, deletionsGeneration, insertionsGeneration;
 
     public double getResult() {
         return result;
@@ -193,144 +51,207 @@ public final class Project {
         this.var.value = x;
         return this.opChangedFiles.aval();
     }
-    
+
     public double avalDeletions(double x) {
         this.var.value = x;
         return this.opDeletions.aval();
     }
-    
+
     public double avalInsertions(double x) {
         this.var.value = x;
         return this.opInsertions.aval();
     }
-    
+
     public void plotChangedFiles() throws IOException {
-        
-        List<String> sets = new ArrayList();        
-                
-        sets.add("title '" + this.nameProject + " - ChangedFiles'");
-        sets.add("xlabel 'time'");
-        sets.add("ylabel 'volume'");
-        sets.add("grid");
-        sets.add("xrange [0:1]");
-        sets.add("yrange [0:1]");
-        sets.add("style line 1 lc rgb '#0060ad' pt 7 ps 0.5 lt 1 lw 2");
-        
-        Plottable p = new PointsFunctionPlottable(
-                this.changedFilesData, 
-                this.opChangedFiles.toString(), 
-                sets,
-                CanonicalPath.getPath(this.nameProject +"_changedFilesData.txt"),
-                CanonicalPath.getPath(this.nameProject +"_opChangedFiles.plot"));
-        
-        p.plot();
-        
+
+        new PlotOp(
+                /*inter(*/this.changedFilesData/*)*/,
+                this.opChangedFiles,
+                this.nameProject + " - ChangedFiles",
+                "tempo",
+                "volume",
+                0.0,
+                1.0,
+                0.0,
+                1.0).plot();
+
     }
-    
+
     public void plotDeletions() throws IOException {
-        
-        List<String> sets = new ArrayList();        
-                
-        sets.add("title '" + this.nameProject + " - Deletions'");
-        sets.add("xlabel 'time'");
-        sets.add("ylabel 'volume'");
-        sets.add("grid");
-        sets.add("xrange [0:1]");
-        sets.add("yrange [0:1]");
-        sets.add("style line 1 lc rgb '#0060ad' pt 7 ps 0.5 lt 1 lw 2");
-        
-        Plottable p = new PointsFunctionPlottable(
-                this.deletionsData, 
-                this.opDeletions.toString(), 
-                sets,
-                CanonicalPath.getPath(this.nameProject +"_deletionsData.txt"),
-                CanonicalPath.getPath(this.nameProject +"_opDeletions.plot"));
-        
-        p.plot();
-        
+
+        new PlotOp(
+                /*inter(*/this.deletionsData/*)*/,
+                this.opDeletions,
+                this.nameProject + " - Deletions",
+                "tempo",
+                "volume",
+                0.0,
+                1.0,
+                0.0,
+                1.0).plot();
+
     }
-    
+
     public void plotInsertions() throws IOException {
-        
-        List<String> sets = new ArrayList();        
-                
-        sets.add("title '" + this.nameProject + " - Insertions'");
-        sets.add("xlabel 'time'");
-        sets.add("ylabel 'volume'");
-        sets.add("grid");
-        sets.add("xrange [0:1]");
-        sets.add("yrange [0:1]");
-        sets.add("style line 1 lc rgb '#0060ad' pt 7 ps 0.5 lt 1 lw 2");
-        
-        Plottable p = new PointsFunctionPlottable(
-                this.insertionsData, 
-                this.opInsertions.toString(), 
-                sets,
-                CanonicalPath.getPath(this.nameProject +"_insertionsData.txt"),
-                CanonicalPath.getPath(this.nameProject +"_opInsertions.plot"));
-        
-        p.plot();
+
+        new PlotOp(
+                /*inter(*/this.insertionsData/*)*/,
+                this.opInsertions,
+                this.nameProject + " - Insertions",
+                "tempo",
+                "volume",
+                0.0,
+                1.0,
+                0.0,
+                1.0).plot();
+
     }
 
     public Project(URL url, Path clonePath, double result, Integer fatorNormalizedDiffs, boolean clone) throws IOException, InterruptedException, ParseException {
 
         this.var = new Var("x");
-        
+
         Mining mining = new Mining(clonePath, url, fatorNormalizedDiffs, clone);
         this.nameProject = mining.name();
         this.result = result;
 
-        Op[] ops = {
-            new VarOp(var),
+        
+        
+        this.changedFilesData = mining.getnDiffs().getChangedFilesData();
+        this.insertionsData = mining.getnDiffs().getInsertionsData();
+        this.deletionsData = mining.getnDiffs().getDeletionsData();
+
+
+        Operator[] ops = {
+            
             new Sum(),
+            new Mul(),
+            new Div(),
             new Sub(),
-            new One(),
-            new Pi(),
-            new Rnd(),
-            //new Exp(),
-            new Less(),
+            new Exp(),
             new Sin(),
             new Cos(),
-            new Mult(),
-            new Div(),
-            //new ExpE(),
-            new Ln()};
+            new Ln(),
+            new Sum(new VarOp(var)),
+            new Mul(new VarOp(var)),
+            new Div(new VarOp(var)),
+            new Sub(new VarOp(var)),
+            new Exp(new VarOp(var)),
+            new Sin(new VarOp(var)),
+            new Cos(new VarOp(var)),
+            new Ln(new VarOp(var)),
+            new VarOp(var),
+            new ConstOp(-1.0),
+            new ConstOp(2.0)
+        };
 
-        OpGenerator generator = new OpGenerator(ops,var, 8);
-        
-        CompositeStoppingCondition scC = new CompositeStoppingCondition(1200, 0.01);
-        CompositeStoppingCondition scD = new CompositeStoppingCondition(1200, 0.01);
-        CompositeStoppingCondition scI = new CompositeStoppingCondition(1200, 0.01);
-        
-         
-        
+        Generator generator = new TreeGenerator(2, 5);
 
-        GA gaC = new GA(new Fitness(mining.getnDiffs().getChangedFilesData(), generator), scC);
-        GA gaD = new GA(new Fitness(mining.getnDiffs().getDeletionsData(), generator), scD);
-        GA gaI = new GA(new Fitness(mining.getnDiffs().getInsertionsData(), generator), scI);
-        
-        
-        
-        this.opChangedFiles = gaC.getOp(true);
-        this.opDeletions = gaD.getOp(true);
-        this.opInsertions = gaI.getOp(true);
-        
-        this.changedFilesData = gaC.getFitnessFunction().dados;
-        this.deletionsData = gaD.getFitnessFunction().dados;
-        this.insertionsData = gaI.getFitnessFunction().dados;
-        
-        this.changedFilesGeneration = scC.numGenerations;
-        this.insertionsGeneration = scI.numGenerations;
-        this.deletionsGeneration = scD.numGenerations;
-        
+        double[] dom = {};
+
+        this.opChangedFiles = new GenOpCoeffOp(
+                var,
+                /*inter(*/this.changedFilesData/*)*/,//data
+                ops,//operators
+                generator,
+                50,//pop size
+                5,// por reuse
+                80,//pop limit
+                new RangeValidity(var, ops, generator, dom, -1.0, 1.0),
+                100,//chrom. size
+                0,//leftBoundChromosome,
+                Integer.MAX_VALUE - 1,//rightBoundChromosome,
+                new CompositeStoppingCondition(6000, -0.0001),
+                new VectorPointsIntegerCrossover(40, 3),
+                0.5,//crossoverRate,
+                0.5,//mutationRate,
+                0.3,//mutationRateGene,
+                2,// aritySelection
+                6000,
+                100,
+                0.00001,
+                0.5
+        );
+
+        /*this.opDeletions = new GenOpCoeffOp(
+                var,
+                inter(this.deletionsData),//data
+                ops,//operators
+                generator,
+                50,//pop size
+                5,// por reuse
+                80,//pop limit
+                new RangeValidity(var, ops, generator, dom, -1.0, 1.0),
+                100,//chrom. size
+                0,//leftBoundChromosome,
+                Integer.MAX_VALUE - 1,//rightBoundChromosome,
+                new CompositeStoppingCondition(6000, -0.0001),
+                new VectorPointsIntegerCrossover(40, 3),
+                0.5,//crossoverRate,
+                0.5,//mutationRate,
+                0.3,//mutationRateGene,
+                2,// aritySelection
+                6000,
+                100,
+                0.00001,
+                0.5
+        );
+
+        this.opInsertions = new GenOpCoeffOp(
+                var,
+                inter(this.insertionsData),//data
+                ops,//operators
+                generator,
+                50,//pop size
+                5,// por reuse
+                80,//pop limit
+                new RangeValidity(var, ops, generator, dom, -1.0, 1.0),
+                100,//chrom. size
+                0,//leftBoundChromosome,
+                Integer.MAX_VALUE - 1,//rightBoundChromosome,
+                new CompositeStoppingCondition(6000, -0.0001),
+                new VectorPointsIntegerCrossover(40, 3),
+                0.5,//crossoverRate,
+                0.5,//mutationRate,
+                0.3,//mutationRateGene,
+                2,// aritySelection
+                6000,
+                100,
+                0.00001,
+                0.5
+        );*/
+
+        System.out.println();
+        System.out.println(this.nameProject);
+        System.out.println("\t" + this.opChangedFiles);
+        //System.out.println("\t" + this.opInsertions);
+        //System.out.println("\t" + this.opDeletions);
+        System.out.println();
+
         this.plotChangedFiles();
-        this.plotDeletions();
-        this.plotInsertions();
-        
-        System.out.println("gaC:\n"+gaC);
-        System.out.println("gaI:\n"+gaI);
-        System.out.println("gaD:\n"+gaD);
+        //this.plotInsertions();
+        //this.plotDeletions();
 
     }
+
+    /*private static double[][] inter(double[][] data) {
+        
+        double[][] ret = new double[2 * data.length - 1][2];
+
+        int i = 0;
+        for (; i < data.length - 1; i++) {
+            ret[i * 2][0] = data[i][0];
+            ret[i * 2][1] = data[i][1];
+            ret[i * 2 + 1][0] = (data[i][0] + data[i + 1][0])/2.0;
+            ret[i * 2 + 1][1] = (data[i][1] + data[i + 1][1])/2.0;
+        }
+        
+        if (i < data.length) {
+            ret[i * 2][0] = data[i][0];
+            ret[i * 2][1] = data[i][1];
+        }
+
+        return ret;
+    }*/
 
 }

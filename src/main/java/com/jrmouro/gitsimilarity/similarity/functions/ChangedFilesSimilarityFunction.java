@@ -35,5 +35,12 @@ public class ChangedFilesSimilarityFunction extends ProjectSimilarityFunction{
     public Double getValue() {
         return this.value;
     }
+
+    @Override
+    public String toString() {
+        return "ChangedFilesSimilarityFunction{" + "value=" + value + '}';
+    }
+    
+    
     
 }

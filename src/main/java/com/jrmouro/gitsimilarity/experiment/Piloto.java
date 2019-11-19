@@ -10,6 +10,7 @@ import com.jrmouro.genetic.chromosome.ChromosomeDouble;
 import com.jrmouro.genetic.evolutionstrategies.chromosome.ChromosomeOne;
 import com.jrmouro.genetic.evolutionstrategies.evolution.EvolutionScoutSniffer;
 import com.jrmouro.genetic.fitnessfunction.FitnessFunction;
+import com.jrmouro.genetic.fitnessfunction.SimilarityFitnessFunction;
 import com.jrmouro.gitsimilarity.mining.CanonicalPath;
 import com.jrmouro.gitsimilarity.project.Project;
 import com.jrmouro.gitsimilarity.similarity.FactorySimilarytyFunction;
@@ -24,7 +25,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,20 +39,26 @@ import org.json.simple.parser.ParseException;
  */
 public class Piloto implements Experiment {
 
-    private final List<ParamClassFunction> paramclassFunctions;
+    //private final List<ParamClassFunction> paramclassFunctions;
     public final List<Project> projectRef;
     public final Project project;
-    private LinearSystemSimilarityEquation lsse;
+    public final double[] aval;
+    //private LinearSystemSimilarityEquation lsse;
     //private final double fatorNormalizedDiffs;
 
-    public Piloto(List<ParamClassFunction> paramclassFunctions, List<Project> projectRef, Project project) {
-        this.paramclassFunctions = paramclassFunctions;
+    public Piloto(
+            //List<ParamClassFunction> paramclassFunctions, 
+            double[] aval,
+            List<Project> projectRef,
+            Project project) {
+        //this.paramclassFunctions = paramclassFunctions;
         this.projectRef = projectRef;
         this.project = project;
+        this.aval = aval;
         //this.fatorNormalizedDiffs = fatorNormalizedDiffs;
     }
 
-    public class Fitness implements FitnessFunction<Double> {
+    /*public class Fitness implements FitnessFunction<Double> {
 
         private final LinearSystemSimilarityEquation lsse;
 
@@ -65,40 +74,83 @@ public class Piloto implements Experiment {
             return Math.abs(lsse.getValue());
         }
 
-    }
-
+    }*/
     @Override
     public void run() {
 
         try {
-            //
-            // Gera o Sistema de Equações de Similaridade
-            lsse = Piloto.getLSSE(projectRef, paramclassFunctions);
+            
+            double[] result = new double[projectRef.size()];
 
-            System.out.println(lsse);
+            int i = 0;
+            for (Project project : projectRef) {
+                result[i++] = project.result;
+            }
 
-            // FitnessFunction
-            Fitness fitness = new Fitness(lsse);
+            double[][] matrix = new double[projectRef.size()][aval.length/* * 3*/];
+
+            
+            System.out.println("matrix: ");
+            i = 0;
+            for (Project project : projectRef) {
+                int j = 0;
+                for (double d : aval) {
+                    matrix[i][j++] = project.avalChangedFiles(d);
+                    //matrix[i][j++] = project.avalInsertions(d);
+                    //matrix[i][j++] = project.avalDeletions(d);
+                }
+                //Arrays.toString(matrix[i]);
+                i++;
+            }
+            
+            DecimalFormat formatter = new DecimalFormat("#0.00");
+            
+            for (double[] ds : matrix) {
+                
+                for (double d : ds) {
+                    
+                    System.out.print(formatter.format(d));
+                    System.out.print("   ");
+                    
+                }
+                System.out.print("\n");
+                
+            }
+
+
+            FitnessFunction<Double> fitness = new SimilarityFitnessFunction(matrix, result);
+
+            double[] weight = new double[aval.length/* * 3*/];
+            double[] vector = new double[aval.length/* * 3*/];
+
+            
+            for (double d : weight)
+                d = 1.0;
+            
+            int j = 0;
+            for (double d : aval) {
+                vector[j++] = project.avalChangedFiles(d);
+                //vector[j++] = project.avalInsertions(d);
+                //vector[j++] = project.avalDeletions(d);
+            }
 
             // um cromossomo inicial
-            ChromosomeDouble c = new ChromosomeOne(lsse.getWeights(), fitness, 0.1);
+            ChromosomeDouble c = new ChromosomeOne(weight, fitness, 0.1);
 
-            c = (ChromosomeDouble) new EvolutionScoutSniffer(100, 0.001).evolve(c, 100, false);
+            c = (ChromosomeDouble) new EvolutionScoutSniffer(100, 0.001).evolve(c, 6000, true);
 
-            SimilarityEquation res = getSE(project, paramclassFunctions);
+            System.out.println("Chromosome: " + c);
+            
+            double s = 0.0;
+            for (int k = 0; k < vector.length; k++) {
+                s += c.getRepresentation().get(k) * vector[k];
+                weight[k] = c.getRepresentation().get(k);
+            }
 
-            res.setWeights(c.getRepresentation());
+            System.out.println("weights: " + Arrays.toString(weight));
+            System.out.println("similarity: " + s);
 
-            System.out.println("weights: " + c);
-
-            System.out.println("similarity: " + res.getValue());
-
-        } catch (ClassNotFoundException
-                | NoSuchMethodException
-                | InstantiationException
-                | IllegalAccessException
-                | IllegalArgumentException
-                | InvocationTargetException ex) {
+        } catch (IllegalArgumentException ex) {
             Logger.getLogger(Piloto.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -106,22 +158,11 @@ public class Piloto implements Experiment {
 
     public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, IOException, InterruptedException, ParseException {
 
-        String deletions = "com.jrmouro.gitsimilarity.similarity.functions.DeletionsSimilarityFunction";
-        String changedFiles = "com.jrmouro.gitsimilarity.similarity.functions.ChangedFilesSimilarityFunction";
-        String insertions = "com.jrmouro.gitsimilarity.similarity.functions.InsertionsSimilarityFunction";
-
-        List<ParamClassFunction> funcoes = new ArrayList();
-
-        for (double d = 0.1; d < 1.0; d = d + 0.1) {
-            funcoes.add(new ParamClassFunction(Class.forName(deletions), d));
-            funcoes.add(new ParamClassFunction(Class.forName(insertions), d));
-            funcoes.add(new ParamClassFunction(Class.forName(changedFiles), d));
-        }
-
+       
         //Projetos de referência
         URL url1 = new URL("https://api.github.com/repos/google/deepvariant");
         URL url2 = new URL("https://api.github.com/repos/EpistasisLab/tpot");
-        URL url3 = new URL("https://api.github.com/repos/giacomelli/GeneticSharp");
+        //URL url3 = new URL("https://api.github.com/repos/giacomelli/GeneticSharp");
 
         Path projRef = Paths.get(CanonicalPath.getPath("temp").toString() + "/projRef");
         Path proj = Paths.get(CanonicalPath.getPath("temp").toString() + "/proj");
@@ -133,19 +174,23 @@ public class Piloto implements Experiment {
             CanonicalPath.createDir("temp");
             CanonicalPath.createDir(projRef);
             CanonicalPath.createDir(proj);
-        } 
-
+        }
 
         List<Project> projectList = new ArrayList();
         projectList.add(new Project(url1, Paths.get(projRef.toString(), "ref1"), 1.0, 10, clone));
         projectList.add(new Project(url2, Paths.get(projRef.toString(), "ref2"), 1.0, 10, clone));
-        projectList.add(new Project(url3, Paths.get(projRef.toString(), "ref3"), 1.0, 10, clone));
+       // projectList.add(new Project(url3, Paths.get(projRef.toString(), "ref3"), 1.0, 10, clone));
 
         //Projeto a ser analisado
         URL gitMining = new URL("https://api.github.com/repos/jrmouro/GitMining");
 
+        double[] aval = {.2,.3,.4/*,.5,.6,.7,.8,.9*/};
+        
         //Experimento "Piloto"
-        Piloto piloto = new Piloto(funcoes, projectList, new Project(gitMining, Paths.get(proj.toString(), "proj"), 1.0, 10, clone));
+        Piloto piloto = new Piloto(
+                aval, 
+                projectList,
+                new Project(gitMining, Paths.get(proj.toString(), "proj"), 0.0, 10, clone));
 
         piloto.run();
 

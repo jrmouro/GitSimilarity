@@ -35,5 +35,12 @@ public class InsertionsSimilarityFunction  extends ProjectSimilarityFunction{
     public Double getValue() {
         return this.value;
     }
+
+    @Override
+    public String toString() {
+        return "InsertionsSimilarityFunction{" + "value=" + value + '}';
+    }
+    
+    
     
 }

@@ -59,15 +59,10 @@ public class LinearSystemSimilarityEquation{
 
     @Override
     public String toString() {
-        
-        String ret = "SimilarityMatrix\n";
-        
-        for (SimilarityEquation similarityEquation : list) {
-            ret += similarityEquation + "\n";
-        }
-        
-        return ret;
+        return "LinearSystemSimilarityEquation{" + "valued=" + valued + ", value=" + value + ", list=" + list + '}';
     }
+
+    
     
     
     

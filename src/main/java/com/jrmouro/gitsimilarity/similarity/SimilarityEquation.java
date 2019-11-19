@@ -70,7 +70,7 @@ public class SimilarityEquation{
 
     @Override
     public String toString() {
-        return list.toString();
+        return "SimilarityEquation: " + list.toString();
     }
     
     

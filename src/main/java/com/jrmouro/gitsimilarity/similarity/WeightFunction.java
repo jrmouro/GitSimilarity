@@ -37,8 +37,10 @@ public class WeightFunction{
 
     @Override
     public String toString() {
-        return this.getValue().toString();
+        return "WeightFunction{" + "weight=" + weight + ", similarityFunction=" + similarityFunction + '}';
     }
+
+    
     
     
     
