@@ -6,6 +6,7 @@
 package com.jrmouro.gitsimilarity.project;
 
 import com.jrmouro.genetic.integer.CompositeStoppingCondition;
+import com.jrmouro.genetic.integer.IntegerCrossover;
 import com.jrmouro.genetic.integer.VectorPointsIntegerCrossover;
 import com.jrmouro.gitsimilarity.mining.Mining;
 import com.jrmouro.operator.simple.ConstOp;
@@ -65,7 +66,7 @@ public final class Project {
     public void plotChangedFiles() throws IOException {
 
         new PlotOp(
-                /*inter(*/this.changedFilesData/*)*/,
+                this.changedFilesData,
                 this.opChangedFiles,
                 this.nameProject + " - ChangedFiles",
                 "tempo",
@@ -80,7 +81,7 @@ public final class Project {
     public void plotDeletions() throws IOException {
 
         new PlotOp(
-                /*inter(*/this.deletionsData/*)*/,
+                this.deletionsData,
                 this.opDeletions,
                 this.nameProject + " - Deletions",
                 "tempo",
@@ -95,7 +96,7 @@ public final class Project {
     public void plotInsertions() throws IOException {
 
         new PlotOp(
-                /*inter(*/this.insertionsData/*)*/,
+                this.insertionsData,
                 this.opInsertions,
                 this.nameProject + " - Insertions",
                 "tempo",
@@ -151,7 +152,7 @@ public final class Project {
 
         this.opChangedFiles = new GenOpCoeffOp(
                 var,
-                /*inter(*/this.changedFilesData/*)*/,//data
+                inter(this.changedFilesData),//data
                 ops,//operators
                 generator,
                 50,//pop size
@@ -162,7 +163,7 @@ public final class Project {
                 0,//leftBoundChromosome,
                 Integer.MAX_VALUE - 1,//rightBoundChromosome,
                 new CompositeStoppingCondition(6000, -0.0001),
-                new VectorPointsIntegerCrossover(40, 3),
+                new IntegerCrossover(80),
                 0.5,//crossoverRate,
                 0.5,//mutationRate,
                 0.3,//mutationRateGene,
@@ -173,7 +174,7 @@ public final class Project {
                 0.5
         );
 
-        /*this.opDeletions = new GenOpCoeffOp(
+        this.opDeletions = new GenOpCoeffOp(
                 var,
                 inter(this.deletionsData),//data
                 ops,//operators
@@ -219,22 +220,22 @@ public final class Project {
                 100,
                 0.00001,
                 0.5
-        );*/
+        );
 
         System.out.println();
         System.out.println(this.nameProject);
         System.out.println("\t" + this.opChangedFiles);
-        //System.out.println("\t" + this.opInsertions);
-        //System.out.println("\t" + this.opDeletions);
+        System.out.println("\t" + this.opInsertions);
+        System.out.println("\t" + this.opDeletions);
         System.out.println();
 
         this.plotChangedFiles();
-        //this.plotInsertions();
-        //this.plotDeletions();
+        this.plotInsertions();
+        this.plotDeletions();
 
     }
 
-    /*private static double[][] inter(double[][] data) {
+    private static double[][] inter(double[][] data) {
         
         double[][] ret = new double[2 * data.length - 1][2];
 
@@ -252,6 +253,6 @@ public final class Project {
         }
 
         return ret;
-    }*/
+    }
 
 }
