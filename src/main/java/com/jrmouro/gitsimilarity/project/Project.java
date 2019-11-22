@@ -143,7 +143,8 @@ public final class Project {
             new Ln(new VarOp(var)),
             new VarOp(var),
             new ConstOp(-1.0),
-            new ConstOp(2.0)
+            new ConstOp(0.1),
+            new ConstOp(2.0)       
         };
 
         Generator generator = new TreeGenerator(2, 5);
