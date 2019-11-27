@@ -9,6 +9,8 @@ import com.jrmouro.genetic.integer.CompositeStoppingCondition;
 import com.jrmouro.genetic.integer.IntegerCrossover;
 import com.jrmouro.genetic.integer.VectorPointsIntegerCrossover;
 import com.jrmouro.gitsimilarity.mining.Mining;
+import com.jrmouro.operator.coeff.Coeff;
+import com.jrmouro.operator.coeff.CoeffOp;
 import com.jrmouro.operator.simple.ConstOp;
 import com.jrmouro.operator.simple.Cos;
 import com.jrmouro.operator.simple.Div;
@@ -18,7 +20,6 @@ import com.jrmouro.operator.simple.Ln;
 import com.jrmouro.operator.simple.Mul;
 import com.jrmouro.operator.simple.Operator;
 import com.jrmouro.operator.plot.PlotOp;
-import com.jrmouro.operator.genetic.RangeValidity;
 import com.jrmouro.operator.simple.Sin;
 import com.jrmouro.operator.simple.Sub;
 import com.jrmouro.operator.simple.Sum;
@@ -29,6 +30,9 @@ import com.jrmouro.operator.generator.TreeGenerator;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.json.simple.parser.ParseException;
 
 /**
@@ -108,7 +112,7 @@ public final class Project {
 
     }
 
-    public Project(URL url, Path clonePath, double result, Integer fatorNormalizedDiffs, boolean clone) throws IOException, InterruptedException, ParseException {
+    public Project(URL url, Path clonePath, double result, Integer fatorNormalizedDiffs, boolean clone, double[] aval) throws IOException, InterruptedException, ParseException {
 
         this.var = new Var("x");
 
@@ -116,15 +120,22 @@ public final class Project {
         this.nameProject = mining.name();
         this.result = result;
 
-        
-        
-        this.changedFilesData = mining.getnDiffs().getChangedFilesData();
-        this.insertionsData = mining.getnDiffs().getInsertionsData();
-        this.deletionsData = mining.getnDiffs().getDeletionsData();
+        this.changedFilesData =  mining.getnDiffs().getChangedFilesData2();
+        this.insertionsData =  mining.getnDiffs().getInsertionsData2();
+        this.deletionsData =  mining.getnDiffs().getDeletionsData2();
 
+        Operator[] cops = {
+            new Sum(),
+            new Mul(),
+            new Exp(),
+            new Sub()};
 
         Operator[] ops = {
-            
+            new VarOp(var),
+            new VarOp(var),
+            new VarOp(var),
+            new VarOp(var),
+            new VarOp(var),
             new Sum(),
             new Mul(),
             new Div(),
@@ -133,94 +144,125 @@ public final class Project {
             new Sin(),
             new Cos(),
             new Ln(),
-            new Sum(new VarOp(var)),
-            new Mul(new VarOp(var)),
-            new Div(new VarOp(var)),
-            new Sub(new VarOp(var)),
-            new Exp(new VarOp(var)),
-            new Sin(new VarOp(var)),
-            new Cos(new VarOp(var)),
-            new Ln(new VarOp(var)),
-            new VarOp(var),
             new ConstOp(-1.0),
-            new ConstOp(0.1),
-            new ConstOp(2.0)       
+            new ConstOp(1.0),
         };
 
         Generator generator = new TreeGenerator(2, 5);
 
-        double[] dom = {};
+        CoeffOp[] coeffOps1 = CoeffOp.getCoeffOps(cops, ops);
+
+        Coeff[] coeffs1 = CoeffOp.getCoeffs((CoeffOp[]) coeffOps1);
+
+        List<Operator> list = new ArrayList();
+        list.addAll(Arrays.asList(ops));
+        list.addAll(Arrays.asList(coeffOps1));
+
+        ops = new Operator[list.size()];
+        ops = list.toArray(ops);
 
         this.opChangedFiles = new GenOpCoeffOp(
-                var,
                 inter(this.changedFilesData),//data
+                var,
+                coeffs1,
                 ops,//operators
                 generator,
-                50,//pop size
-                5,// por reuse
-                80,//pop limit
-                new RangeValidity(var, ops, generator, dom, -1.0, 1.0),
-                100,//chrom. size
+                300,//pop size
+                30,// por reuse
+                300,//pop limit
+                128,//chrom. size
                 0,//leftBoundChromosome,
                 Integer.MAX_VALUE - 1,//rightBoundChromosome,
-                new CompositeStoppingCondition(6000, -0.0001),
-                new IntegerCrossover(80),
+                new CompositeStoppingCondition(500, -0.0001),
+                new IntegerCrossover(32),
                 0.5,//crossoverRate,
-                0.5,//mutationRate,
-                0.3,//mutationRateGene,
+                0.2,//mutationRate,
+                0.7,//mutationRateGene,
                 2,// aritySelection
-                6000,
-                100,
-                0.00001,
-                0.5
+                3000,
+                50,
+                0.001,
+                0.5,
+                aval,
+                0.0,
+                20.0
         );
 
+        
+        CoeffOp[] coeffOps2 = CoeffOp.getCoeffOps(cops, ops);
+
+        Coeff[] coeffs2 = CoeffOp.getCoeffs((CoeffOp[]) coeffOps2);
+
+        list = new ArrayList();
+        list.addAll(Arrays.asList(ops));
+        list.addAll(Arrays.asList(coeffOps2));
+
+        ops = new Operator[list.size()];
+        ops = list.toArray(ops);
+        
         this.opDeletions = new GenOpCoeffOp(
+                inter(this.changedFilesData),//data
                 var,
-                inter(this.deletionsData),//data
+                coeffs2,
                 ops,//operators
                 generator,
-                50,//pop size
-                5,// por reuse
-                80,//pop limit
-                new RangeValidity(var, ops, generator, dom, -1.0, 1.0),
-                100,//chrom. size
+                300,//pop size
+                30,// por reuse
+                300,//pop limit
+                128,//chrom. size
                 0,//leftBoundChromosome,
                 Integer.MAX_VALUE - 1,//rightBoundChromosome,
-                new CompositeStoppingCondition(6000, -0.0001),
-                new VectorPointsIntegerCrossover(40, 3),
+                new CompositeStoppingCondition(500, -0.0001),
+                new IntegerCrossover(32),
                 0.5,//crossoverRate,
-                0.5,//mutationRate,
-                0.3,//mutationRateGene,
+                0.2,//mutationRate,
+                0.7,//mutationRateGene,
                 2,// aritySelection
-                6000,
-                100,
-                0.00001,
-                0.5
+                3000,
+                50,
+                0.001,
+                0.5,
+                aval,
+                0.0,
+                20.0
         );
+        
+        CoeffOp[] coeffOps3 = CoeffOp.getCoeffOps(cops, ops);
+
+        Coeff[] coeffs3 = CoeffOp.getCoeffs((CoeffOp[]) coeffOps3);
+
+        list = new ArrayList();
+        list.addAll(Arrays.asList(ops));
+        list.addAll(Arrays.asList(coeffOps3));
+
+        ops = new Operator[list.size()];
+        ops = list.toArray(ops);
 
         this.opInsertions = new GenOpCoeffOp(
+                inter(this.changedFilesData),//data
                 var,
-                inter(this.insertionsData),//data
+                coeffs3,
                 ops,//operators
                 generator,
-                50,//pop size
-                5,// por reuse
-                80,//pop limit
-                new RangeValidity(var, ops, generator, dom, -1.0, 1.0),
-                100,//chrom. size
+                300,//pop size
+                30,// por reuse
+                300,//pop limit
+                128,//chrom. size
                 0,//leftBoundChromosome,
                 Integer.MAX_VALUE - 1,//rightBoundChromosome,
-                new CompositeStoppingCondition(6000, -0.0001),
-                new VectorPointsIntegerCrossover(40, 3),
+                new CompositeStoppingCondition(500, -0.0001),
+                new IntegerCrossover(32),
                 0.5,//crossoverRate,
-                0.5,//mutationRate,
-                0.3,//mutationRateGene,
+                0.2,//mutationRate,
+                0.7,//mutationRateGene,
                 2,// aritySelection
-                6000,
-                100,
-                0.00001,
-                0.5
+                3000,
+                50,
+                0.001,
+                0.5,
+                aval,
+                0.0,
+                20.0
         );
 
         System.out.println();
@@ -237,17 +279,17 @@ public final class Project {
     }
 
     private static double[][] inter(double[][] data) {
-        
+
         double[][] ret = new double[2 * data.length - 1][2];
 
         int i = 0;
         for (; i < data.length - 1; i++) {
             ret[i * 2][0] = data[i][0];
             ret[i * 2][1] = data[i][1];
-            ret[i * 2 + 1][0] = (data[i][0] + data[i + 1][0])/2.0;
-            ret[i * 2 + 1][1] = (data[i][1] + data[i + 1][1])/2.0;
+            ret[i * 2 + 1][0] = (data[i][0] + data[i + 1][0]) / 2.0;
+            ret[i * 2 + 1][1] = (data[i][1] + data[i + 1][1]) / 2.0;
         }
-        
+
         if (i < data.length) {
             ret[i * 2][0] = data[i][0];
             ret[i * 2][1] = data[i][1];

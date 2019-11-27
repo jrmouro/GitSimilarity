@@ -30,13 +30,13 @@ import org.json.simple.parser.ParseException;
  *
  * @author ronaldo
  */
-public class Piloto implements Experiment {
+public class ExperimentOne implements Experiment {
 
     public final List<Project> projectRef;
     public final Project project;
     public final double[] aval;
 
-    public Piloto( 
+    public ExperimentOne( 
             double[] aval,
             List<Project> projectRef,
             Project project) {
@@ -56,7 +56,7 @@ public class Piloto implements Experiment {
                 result[i++] = project.result;
             }
 
-            double[][] matrix = new double[projectRef.size()][aval.length * 3];
+            double[][] matrix = new double[projectRef.size()][aval.length];
 
             
             System.out.println("matrix: ");
@@ -64,20 +64,18 @@ public class Piloto implements Experiment {
             for (Project project : projectRef) {
                 int j = 0;
                 for (double d : aval) {
-                    matrix[i][j++] = project.avalChangedFiles(d);
                     matrix[i][j++] = project.avalInsertions(d);
-                    matrix[i][j++] = project.avalDeletions(d);
                 }
                 i++;
             }
             
-            DecimalFormat formatter = new DecimalFormat("#0.00");
+            
             
             for (double[] ds : matrix) {
                 
                 for (double d : ds) {
                     
-                    System.out.print(formatter.format(d));
+                    System.out.print(d);
                     System.out.print("   ");
                     
                 }
@@ -88,8 +86,8 @@ public class Piloto implements Experiment {
 
             FitnessFunction<Double> fitness = new SimilarityFitnessFunction(matrix, result);
 
-            double[] weight = new double[aval.length * 3];
-            double[] vector = new double[aval.length * 3];
+            double[] weight = new double[aval.length];
+            double[] vector = new double[aval.length];
 
             
             for (double d : weight)
@@ -97,9 +95,8 @@ public class Piloto implements Experiment {
             
             int j = 0;
             for (double d : aval) {
-                vector[j++] = project.avalChangedFiles(d);
                 vector[j++] = project.avalInsertions(d);
-                vector[j++] = project.avalDeletions(d);
+                
             }
 
             // um cromossomo inicial
@@ -125,7 +122,7 @@ public class Piloto implements Experiment {
             System.out.println("similarity: " + s);
 
         } catch (IllegalArgumentException ex) {
-            Logger.getLogger(Piloto.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ExperimentOne.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -135,7 +132,6 @@ public class Piloto implements Experiment {
        
         //Projetos de referência
         URL url1 = new URL("https://api.github.com/repos/google/deepvariant");
-        URL url2 = new URL("https://api.github.com/repos/EpistasisLab/tpot");
         URL url3 = new URL("https://api.github.com/repos/giacomelli/GeneticSharp");
 
         Path projRef = Paths.get(CanonicalPath.getPath("temp").toString() + "/projRef");
@@ -153,9 +149,8 @@ public class Piloto implements Experiment {
         double[] aval = {.2,.3,.4,.5,.6,.7,.8,.9};
 
         List<Project> projectList = new ArrayList();
-        projectList.add(new Project(url1, Paths.get(projRef.toString(), "ref1"), 0.0, 10, clone, aval));
-        //projectList.add(new Project(url2, Paths.get(projRef.toString(), "ref2"), 1.0, 10, clone, aval));
-        projectList.add(new Project(url3, Paths.get(projRef.toString(), "ref3"), 1.0, 10, clone, aval));
+        projectList.add(new Project(url1, Paths.get(projRef.toString(), "ref1"), 0.0, 5, clone, aval));
+        projectList.add(new Project(url3, Paths.get(projRef.toString(), "ref3"), 1.0, 5, clone, aval));
 
         //Projeto a ser analisado
         URL gitMining = new URL("https://api.github.com/repos/jrmouro/GitMining");
@@ -163,10 +158,10 @@ public class Piloto implements Experiment {
         
         
         //Experimento "Piloto"
-        Piloto piloto = new Piloto(
+        ExperimentOne piloto = new ExperimentOne(
                 aval, 
                 projectList,
-                new Project(gitMining, Paths.get(proj.toString(), "proj"), 0.0, 10, clone, aval));
+                new Project(gitMining, Paths.get(proj.toString(), "proj"), 0.0, 5, clone, aval));
 
         piloto.run();
 

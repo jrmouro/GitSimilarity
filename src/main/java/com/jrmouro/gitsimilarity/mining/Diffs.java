@@ -116,6 +116,36 @@ public class Diffs implements Iterable<Diff> {
             return ret;
         }
         
+        public double[][] getChangedFilesData2(){
+            double[][] ret = new double[this.diffs.size()][2];
+            int i = 0;
+            for (NormalizedDiff diff : diffs) {
+                ret[i][0] = diff.time;
+                ret[i++][1] = diff.changedfiles;
+            }
+            return ret;
+        }
+        
+        public double[][] getInsertionsData2(){
+            double[][] ret = new double[this.diffs.size()][2];
+            int i = 0;
+            for (NormalizedDiff diff : diffs) {
+                ret[i][0] = diff.time;
+                ret[i++][1] = diff.insertions;
+            }
+            return ret;
+        }
+        
+        public double[][] getDeletionsData2(){
+            double[][] ret = new double[this.diffs.size()][2];
+            int i = 0;
+            for (NormalizedDiff diff : diffs) {
+                ret[i][0] = diff.time;
+                ret[i++][1] = diff.deletions;
+            }
+            return ret;
+        }
+        
     }
     
     static public Diffs.NormalizedDiffs getNormalizedDiffs(Diffs diffs, Integer pass) {
